@@ -7,39 +7,32 @@ Sebuah sistem AI percakapan modular yang menggunakan Google Gemini API. Proyek i
 Sistem ini menggunakan pendekatan modular yang memisahkan logika berpikir, penyimpanan ingatan, dan antarmuka interaksi:
 
 1.  **Interface (`app.py`)**: Titik masuk utama aplikasi (CLI).
-2.  **Brain (`brain.py`)**: Inti dari AI yang mengoordinasikan penalaran dan eksekusi tool.
-3.  **Reasoning Layer (`reasoning.py`)**: Lapisan kontrol yang memaksa AI untuk berpikir langkah-demi-langkah.
+2.  **Brain (`brain.py`)**: Inti dari AI yang mengoordinasikan penalaran, validasi, dan eksekusi tool.
+3.  **Reasoning Layer (`reasoning.py`)**: Lapisan kontrol yang memaksa AI untuk berpikir langkah-demi-langkah dan memvalidasi jawabannya sendiri.
 4.  **Tools (`tools.py`)**: Kumpulan alat yang divalidasi dan aman untuk berinteraksi dengan dunia luar.
 5.  **Memory**:
     - **Short-Term (`memory.py`)**: Ingatan sesi chat saat ini.
-    - **Long-Term (`long_memory.py`)**: Pengetahuan permanen berbasis vector search.
+    - **Long-Term (`long_memory.py`)**: Pengetahuan permanen berbasis vector search dengan skor kepentingan.
+
+---
+
+## Stage 5: LLM Quality Improvement
+
+Sistem kini lebih cerdas dan konsisten berkat peningkatan arsitektur prompt dan proses validasi internal.
+
+### Peningkatan Utama:
+- **Prompt Architecture**: Pemisahan yang jelas antara Aturan Sistem, Konteks Memori, dan Input Pengguna untuk hasil yang lebih fokus.
+- **Self-Validation**: Sebelum menjawab, AI secara internal membuat draft jawaban, meninjaunya (validasi), dan memperbaikinya jika ditemukan ketidakkonsistenan. Hanya jawaban akhir yang telah divalidasi yang ditampilkan ke pengguna.
+- **Importance Scoring**: Informasi yang disimpan di memori jangka panjang kini memiliki skor kepentingan (1-10). Informasi yang dianggap tidak penting (skor < 3) akan diabaikan untuk menjaga kualitas memori.
+- **Consistency Guard**: Instruksi kualitas yang ketat untuk menjaga nada bicara Bahasa Indonesia yang profesional dan mencegah halusinasi.
 
 ---
 
 ## Stage 4: Tools & Actions
-
-Sistem kini memiliki kemampuan untuk mengambil tindakan melalui Tool yang terkontrol. AI dapat mencari informasi di web, mengelola file di sandbox, dan menjalankan perintah terbatas.
-
-### Daftar Tool
-- `web_search`: Mencari informasi terbaru di internet.
-- `read_file` / `write_file`: Membaca dan menulis file di dalam direktori `sandbox/`.
-- `list_directory`: Melihat isi direktori sandbox.
-- `run_command`: Menjalankan perintah sistem terbatas (`ls`, `pwd`, `python`, `pip list`).
-- `write_memory`: Menyimpan fakta penting secara permanen ke memori jangka panjang.
-
-### Batasan Keamanan (Safety Boundaries)
-1.  **Sandbox Only**: Semua operasi file hanya diizinkan di dalam folder `sandbox/`. AI tidak bisa mengakses file sistem di luar folder ini.
-2.  **Command Whitelist**: Hanya perintah tertentu yang diizinkan. Perintah berbahaya atau tidak dikenal akan ditolak.
-3.  **Single Tool Call**: AI hanya dapat memanggil maksimal satu tool per input pengguna untuk menjaga kontrol.
-4.  **Non-Autonomous**: AI tidak dapat menjalankan loop tindakan sendiri; setiap tindakan harus dipicu oleh interaksi pengguna.
-
----
-
-## Stage 3: Reasoning & Control Layer
-AI melakukan penalaran internal sebelum menjawab. Proses ini disembunyikan dari pengguna untuk menjaga jawaban tetap bersih dan fokus pada hasil akhir.
+Sistem dapat mencari informasi di web, mengelola file di sandbox, dan menjalankan perintah terbatas. Semua operasi file dibatasi di folder `sandbox/`.
 
 ## Stage 2: Long-Term Memory (LTM)
-Mendukung penyimpanan pengetahuan permanen. Gunakan `ingest.py` untuk menambahkan data secara manual.
+Mendukung penyimpanan pengetahuan permanen berbasis kemiripan semantik.
 
 ---
 
@@ -55,4 +48,3 @@ Mendukung penyimpanan pengetahuan permanen. Gunakan `ingest.py` untuk menambahka
 ```bash
 python app.py
 ```
-Semua file yang dihasilkan AI melalui tool `write_file` akan muncul di folder `sandbox/`.

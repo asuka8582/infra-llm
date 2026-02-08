@@ -2,26 +2,23 @@ import os
 import subprocess
 import json
 from duckduckgo_search import DDGS
-from long_memory import LongTermMemory
 
 class ToolExecutor:
     """
     Registry and executor for AI tools with safety boundaries.
     """
-    def __init__(self, sandbox_dir="sandbox"):
+    def __init__(self, ltm, sandbox_dir="sandbox"):
         self.sandbox_dir = sandbox_dir
         if not os.path.exists(self.sandbox_dir):
             os.makedirs(self.sandbox_dir)
 
-        self.ltm = LongTermMemory()
+        self.ltm = ltm
         self.command_whitelist = ["ls", "pwd", "python", "pip list"]
 
     def _get_sandbox_path(self, path):
         """Ensures the path is within the sandbox."""
-        # Normalize path
         normalized = os.path.normpath(path)
         if normalized.startswith("..") or os.path.isabs(normalized):
-            # If it's absolute, we check if it's inside sandbox_dir
             abs_sandbox = os.path.abspath(self.sandbox_dir)
             abs_path = os.path.abspath(os.path.join(self.sandbox_dir, normalized) if not os.path.isabs(normalized) else normalized)
             if not abs_path.startswith(abs_sandbox):
@@ -77,8 +74,6 @@ class ToolExecutor:
                 return "Error: Empty command."
 
             base_cmd = cmd_parts[0]
-
-            # Special check for 'python script.py' or 'pip list'
             is_whitelisted = False
             if base_cmd in ["ls", "pwd"]:
                 is_whitelisted = True
@@ -90,7 +85,6 @@ class ToolExecutor:
             if not is_whitelisted:
                 return f"Error: Command '{command}' is not whitelisted."
 
-            # Execute in sandbox dir if possible, though some commands like 'ls' take paths
             result = subprocess.run(
                 command,
                 shell=True,
@@ -105,11 +99,13 @@ class ToolExecutor:
         except Exception as e:
             return f"Error running command: {str(e)}"
 
-    def write_memory(self, fact):
-        """Saves an important fact to long-term memory."""
+    def write_memory(self, fact, importance=5):
+        """Saves a fact to long-term memory with importance score."""
         try:
-            self.ltm.add_memory(fact)
-            return f"Fact successfully recorded in long-term memory: '{fact}'"
+            res = self.ltm.add_memory(fact, importance=importance)
+            if res == "Success":
+                return f"Fact recorded (importance: {importance}): '{fact}'"
+            return res # Discarded message
         except Exception as e:
             return f"Error writing to memory: {str(e)}"
 
@@ -128,7 +124,6 @@ class ToolExecutor:
             return f"Error: Tool '{tool_name}' not found."
 
         try:
-            # params is expected to be a dict
             return tools_map[tool_name](**params)
         except TypeError as e:
             return f"Error: Invalid parameters for tool '{tool_name}': {str(e)}"

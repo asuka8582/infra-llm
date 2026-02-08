@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 
 class LongTermMemory:
     """
-    Manages long-term memory using vector embeddings and FAISS.
+    Manages long-term memory using vector embeddings and FAISS with importance scoring.
     """
     def __init__(self, storage_dir="ltm_data", model_name="paraphrase-multilingual-MiniLM-L12-v2"):
         self.storage_dir = storage_dir
@@ -24,22 +24,34 @@ class LongTermMemory:
         if os.path.exists(self.index_path) and os.path.exists(self.docs_path):
             self.index = faiss.read_index(self.index_path)
             with open(self.docs_path, "r", encoding="utf-8") as f:
-                self.documents = json.load(f)
+                loaded_docs = json.load(f)
+                # Convert old format (list of strings) to new format (list of dicts) if necessary
+                self.documents = []
+                for doc in loaded_docs:
+                    if isinstance(doc, str):
+                        self.documents.append({"content": doc, "importance": 5})
+                    else:
+                        self.documents.append(doc)
         else:
             self.index = faiss.IndexFlatL2(self.dimension)
             self.documents = []
 
-    def add_memory(self, text):
+    def add_memory(self, text, importance=5):
         """
-        Adds a new piece of information to the long-term memory.
+        Adds a new piece of information to the long-term memory with an importance score (1-10).
         """
         if not text.strip():
             return
 
+        # Avoid storing trivial information (importance < 3)
+        if importance < 3:
+            return f"Information discarded due to low importance score: {importance}"
+
         embedding = self.model.encode([text])
         self.index.add(np.array(embedding).astype("float32"))
-        self.documents.append(text)
+        self.documents.append({"content": text, "importance": importance})
         self.save()
+        return "Success"
 
     def query_memory(self, query, top_k=3):
         """
@@ -54,7 +66,8 @@ class LongTermMemory:
         results = []
         for idx in indices[0]:
             if idx != -1 and idx < len(self.documents):
-                results.append(self.documents[idx])
+                doc = self.documents[idx]
+                results.append(doc["content"])
 
         return "\n---\n".join(results)
 
