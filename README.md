@@ -6,42 +6,40 @@ Sebuah sistem AI percakapan modular yang menggunakan Google Gemini API. Proyek i
 
 Sistem ini menggunakan pendekatan modular yang memisahkan logika berpikir, penyimpanan ingatan, dan antarmuka interaksi:
 
-1.  **Interface (`app.py`)**: Titik masuk utama aplikasi (CLI) yang menangani input/output pengguna dan koordinasi antar modul.
-2.  **Brain (`brain.py`)**: Inti dari AI yang membungkus model Gemini 1.5 Flash dan mengoordinasikan lapisan penalaran.
-3.  **Reasoning Layer (`reasoning.py`)**: Lapisan kontrol yang memaksa AI untuk berpikir langkah-demi-langkah sebelum memberikan jawaban akhir.
-4.  **Short-Term Memory (`memory.py`)**: Mengelola ingatan jangka pendek dengan sistem *rolling window*.
-5.  **Long-Term Memory (`long_memory.py`)**: Mengelola pengetahuan permanen menggunakan vector embeddings (FAISS).
+1.  **Interface (`app.py`)**: Titik masuk utama aplikasi (CLI).
+2.  **Brain (`brain.py`)**: Inti dari AI yang mengoordinasikan penalaran dan eksekusi tool.
+3.  **Reasoning Layer (`reasoning.py`)**: Lapisan kontrol yang memaksa AI untuk berpikir langkah-demi-langkah.
+4.  **Tools (`tools.py`)**: Kumpulan alat yang divalidasi dan aman untuk berinteraksi dengan dunia luar.
+5.  **Memory**:
+    - **Short-Term (`memory.py`)**: Ingatan sesi chat saat ini.
+    - **Long-Term (`long_memory.py`)**: Pengetahuan permanen berbasis vector search.
 
-**Inspirasi**: Arsitektur sistem ini terinspirasi oleh konsep "autonomous AI core" seperti pada sistem Neuro-sama, namun difokuskan sebagai asisten AI umum yang cerdas dan netral.
+---
+
+## Stage 4: Tools & Actions
+
+Sistem kini memiliki kemampuan untuk mengambil tindakan melalui Tool yang terkontrol. AI dapat mencari informasi di web, mengelola file di sandbox, dan menjalankan perintah terbatas.
+
+### Daftar Tool
+- `web_search`: Mencari informasi terbaru di internet.
+- `read_file` / `write_file`: Membaca dan menulis file di dalam direktori `sandbox/`.
+- `list_directory`: Melihat isi direktori sandbox.
+- `run_command`: Menjalankan perintah sistem terbatas (`ls`, `pwd`, `python`, `pip list`).
+- `write_memory`: Menyimpan fakta penting secara permanen ke memori jangka panjang.
+
+### Batasan Keamanan (Safety Boundaries)
+1.  **Sandbox Only**: Semua operasi file hanya diizinkan di dalam folder `sandbox/`. AI tidak bisa mengakses file sistem di luar folder ini.
+2.  **Command Whitelist**: Hanya perintah tertentu yang diizinkan. Perintah berbahaya atau tidak dikenal akan ditolak.
+3.  **Single Tool Call**: AI hanya dapat memanggil maksimal satu tool per input pengguna untuk menjaga kontrol.
+4.  **Non-Autonomous**: AI tidak dapat menjalankan loop tindakan sendiri; setiap tindakan harus dipicu oleh interaksi pengguna.
 
 ---
 
 ## Stage 3: Reasoning & Control Layer
-
-Sistem kini dilengkapi dengan lapisan penalaran internal untuk meningkatkan konsistensi dan kualitas jawaban.
-
-### Cara Kerja
-Setiap kali pengguna memberikan input, AI tidak langsung menjawab. Sebaliknya, AI akan:
-1.  **Menganalisis Niat**: Memahami apa yang sebenarnya diinginkan pengguna.
-2.  **Evaluasi Konteks**: Memeriksa memori jangka pendek dan panjang untuk informasi relevan.
-3.  **Perencanaan**: Menyusun langkah-langkah untuk memberikan jawaban terbaik.
-4.  **Output Terkontrol**: Menghasilkan jawaban akhir berdasarkan proses penalaran tersebut.
-
-### Perbedaan Output
-- **Raw LLM Output**: AI memberikan jawaban langsung (mungkin kurang konsisten).
-- **Controlled Reasoning-based Output**: AI berpikir secara internal terlebih dahulu. Hasil penalaran ini **disembunyikan** dari pengguna, sehingga pengguna hanya menerima jawaban akhir yang lebih matang dan terstruktur.
-
----
+AI melakukan penalaran internal sebelum menjawab. Proses ini disembunyikan dari pengguna untuk menjaga jawaban tetap bersih dan fokus pada hasil akhir.
 
 ## Stage 2: Long-Term Memory (LTM)
-
-Sistem mendukung Ingatan Jangka Panjang yang memungkinkan AI untuk mengingat informasi penting secara permanen.
-
-### Cara Menambahkan Memori Jangka Panjang
-Gunakan skrip `ingest.py`:
-```bash
-python ingest.py "Teks pengetahuan di sini"
-```
+Mendukung penyimpanan pengetahuan permanen. Gunakan `ingest.py` untuk menambahkan data secara manual.
 
 ---
 
@@ -57,3 +55,4 @@ python ingest.py "Teks pengetahuan di sini"
 ```bash
 python app.py
 ```
+Semua file yang dihasilkan AI melalui tool `write_file` akan muncul di folder `sandbox/`.

@@ -3,3 +3,4 @@ python-dotenv
 sentence-transformers
 faiss-cpu
 numpy
+duckduckgo_search
