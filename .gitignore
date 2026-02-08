@@ -1,0 +1,65 @@
+# ======================
+# Python
+# ======================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+.env.*
+.venv/
+
+# ======================
+# Jupyter / ML
+# ======================
+.ipynb_checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# ======================
+# HuggingFace / Transformers
+# ======================
+.cache/
+huggingface/
+hf_cache/
+
+# ======================
+# Embeddings / Vector DB
+# ======================
+embeddings/
+*.faiss
+*.index
+
+# ======================
+# Logs & runtime
+# ======================
+logs/
+*.log
+
+# ======================
+# OS / Editor
+# ======================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ======================
+# Test / build
+# ======================
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# ======================
+# Secrets
+# ======================
+.env
+.env.local
+.env.production
