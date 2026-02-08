@@ -7,59 +7,53 @@ Sebuah sistem AI percakapan modular yang menggunakan Google Gemini API. Proyek i
 Sistem ini menggunakan pendekatan modular yang memisahkan logika berpikir, penyimpanan ingatan, dan antarmuka interaksi:
 
 1.  **Interface (`app.py`)**: Titik masuk utama aplikasi (CLI) yang menangani input/output pengguna dan koordinasi antar modul.
-2.  **Brain (`brain.py`)**: Inti dari AI yang membungkus model Gemini 1.5 Flash. Bertugas memproses input berdasarkan konteks yang diberikan (pendek & panjang) dan instruksi sistem.
-3.  **Short-Term Memory (`memory.py`)**: Mengelola ingatan jangka pendek dengan sistem *rolling window* untuk menjaga percakapan tetap relevan.
-4.  **Long-Term Memory (`long_memory.py`)**: Mengelola pengetahuan permanen menggunakan vector embeddings (FAISS) untuk pencarian kemiripan semantik.
+2.  **Brain (`brain.py`)**: Inti dari AI yang membungkus model Gemini 1.5 Flash dan mengoordinasikan lapisan penalaran.
+3.  **Reasoning Layer (`reasoning.py`)**: Lapisan kontrol yang memaksa AI untuk berpikir langkah-demi-langkah sebelum memberikan jawaban akhir.
+4.  **Short-Term Memory (`memory.py`)**: Mengelola ingatan jangka pendek dengan sistem *rolling window*.
+5.  **Long-Term Memory (`long_memory.py`)**: Mengelola pengetahuan permanen menggunakan vector embeddings (FAISS).
 
 **Inspirasi**: Arsitektur sistem ini terinspirasi oleh konsep "autonomous AI core" seperti pada sistem Neuro-sama, namun difokuskan sebagai asisten AI umum yang cerdas dan netral.
 
 ---
 
-## Stage 2: Long-Term Memory (LTM)
+## Stage 3: Reasoning & Control Layer
 
-Sistem kini mendukung Ingatan Jangka Panjang yang memungkinkan AI untuk mengingat informasi penting secara permanen di luar batas sesi chat saat ini.
+Sistem kini dilengkapi dengan lapisan penalaran internal untuk meningkatkan konsistensi dan kualitas jawaban.
 
 ### Cara Kerja
-- **Short-Term Memory (STM)**: Mengingat pesan-pesan terakhir dalam sesi chat yang sedang berlangsung.
-- **Long-Term Memory (LTM)**: Mengambil informasi relevan dari basis data lokal berdasarkan kemiripan makna menggunakan *Vector Embeddings*. Saat Anda bertanya, sistem akan mencari informasi terkait di LTM dan memberikannya kepada AI sebagai konteks tambahan.
+Setiap kali pengguna memberikan input, AI tidak langsung menjawab. Sebaliknya, AI akan:
+1.  **Menganalisis Niat**: Memahami apa yang sebenarnya diinginkan pengguna.
+2.  **Evaluasi Konteks**: Memeriksa memori jangka pendek dan panjang untuk informasi relevan.
+3.  **Perencanaan**: Menyusun langkah-langkah untuk memberikan jawaban terbaik.
+4.  **Output Terkontrol**: Menghasilkan jawaban akhir berdasarkan proses penalaran tersebut.
+
+### Perbedaan Output
+- **Raw LLM Output**: AI memberikan jawaban langsung (mungkin kurang konsisten).
+- **Controlled Reasoning-based Output**: AI berpikir secara internal terlebih dahulu. Hasil penalaran ini **disembunyikan** dari pengguna, sehingga pengguna hanya menerima jawaban akhir yang lebih matang dan terstruktur.
+
+---
+
+## Stage 2: Long-Term Memory (LTM)
+
+Sistem mendukung Ingatan Jangka Panjang yang memungkinkan AI untuk mengingat informasi penting secara permanen.
 
 ### Cara Menambahkan Memori Jangka Panjang
-Anda dapat menambahkan pengetahuan baru ke dalam sistem menggunakan skrip `ingest.py`:
-
+Gunakan skrip `ingest.py`:
 ```bash
-# Menambahkan satu kalimat/teks
-python ingest.py "Jules adalah asisten AI yang ahli dalam pengembangan perangkat lunak."
-
-# Menambahkan dari file teks
-python ingest.py --file data_pengetahuan.txt
+python ingest.py "Teks pengetahuan di sini"
 ```
 
 ---
 
 ## Prasyarat
-
-- Python 3.9 atau lebih tinggi.
-- API Key Google Gemini.
+- Python 3.9+
+- API Key Google Gemini
 
 ## Instalasi
-
-1.  Pasang dependensi yang diperlukan:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2.  Salin file `.env.example` menjadi `.env` dan masukkan API Key Anda.
+1. Pasang dependensi: `pip install -r requirements.txt`
+2. Salin `.env.example` ke `.env` dan masukkan API Key Anda.
 
 ## Cara Menjalankan
-
-Jalankan sistem dengan perintah berikut:
-
 ```bash
 python app.py
 ```
-
-## Fitur
-
-- **Semantic Search**: Pencarian informasi berdasarkan makna, bukan hanya kata kunci.
-- **Persistence**: Ingatan jangka panjang disimpan secara lokal di direktori `ltm_data/`.
-- **Indonesian Support**: Menggunakan model embedding multilingual untuk dukungan Bahasa Indonesia yang optimal.
