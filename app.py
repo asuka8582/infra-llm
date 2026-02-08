@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from brain import AIBrain
 from memory import ShortTermMemory
+from long_memory import LongTermMemory
 
 # Load environment variables
 load_dotenv()
@@ -17,7 +18,10 @@ def main():
     brain = AIBrain(api_key=api_key)
     memory = ShortTermMemory(max_turns=10)
 
-    print("=== AI Core System (CLI) ===")
+    print("Initializing Long-Term Memory (Stage 2)...")
+    ltm = LongTermMemory()
+
+    print("\n=== AI Core System (CLI) ===")
     print("Sistem siap. Silakan kirim pesan atau ketik 'exit' untuk keluar.")
     print("=" * 28 + "\n")
 
@@ -33,13 +37,20 @@ def main():
                 print("\nSistem dimatikan. Sampai jumpa.")
                 break
 
-            # Get response from brain using current memory context
-            response_text = brain.generate_response(user_input, memory.get_history())
+            # 1. Retrieve relevant context from Long-Term Memory
+            ltm_context = ltm.query_memory(user_input)
+
+            # 2. Get response from brain using short-term and long-term context
+            response_text = brain.generate_response(
+                user_input,
+                memory.get_history(),
+                long_term_context=ltm_context
+            )
 
             # Print response
             print(f"AI: {response_text}\n")
 
-            # Update memory with this exchange
+            # Update short-term memory with this exchange
             memory.add_turn("user", user_input)
             memory.add_turn("model", response_text)
 

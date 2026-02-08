@@ -1,2 +1,5 @@
 google-generativeai
 python-dotenv
+sentence-transformers
+faiss-cpu
+numpy
