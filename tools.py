@@ -13,7 +13,7 @@ class ToolExecutor:
             os.makedirs(self.sandbox_dir)
 
         self.ltm = ltm
-        self.command_whitelist = ["ls", "pwd", "python", "pip list"]
+        self.command_whitelist = ["ls", "pwd", "python", "pip"]
 
     def _get_sandbox_path(self, path):
         """Ensures the path is within the sandbox."""
@@ -67,27 +67,32 @@ class ToolExecutor:
             return f"Error listing directory: {str(e)}"
 
     def run_command(self, command):
-        """Runs a whitelisted command."""
+        """Runs a whitelisted command securely."""
         try:
             cmd_parts = command.split()
             if not cmd_parts:
-                return "Error: Empty command."
+                return "Error: Perintah kosong."
 
             base_cmd = cmd_parts[0]
+
+            # Strict whitelist check
             is_whitelisted = False
             if base_cmd in ["ls", "pwd"]:
                 is_whitelisted = True
             elif base_cmd == "python" and len(cmd_parts) > 1:
-                is_whitelisted = True
-            elif command == "pip list":
+                # Basic protection: ensure no obvious piping/redirection characters
+                if all(char not in command for char in [";", "&", "|", ">", "<"]):
+                    is_whitelisted = True
+            elif base_cmd == "pip" and len(cmd_parts) == 2 and cmd_parts[1] == "list":
                 is_whitelisted = True
 
             if not is_whitelisted:
-                return f"Error: Command '{command}' is not whitelisted."
+                return f"Error: Command '{command}' is not whitelisted or contains forbidden characters."
 
+            # Execute with shell=False to prevent shell injection
             result = subprocess.run(
-                command,
-                shell=True,
+                cmd_parts,
+                shell=False,
                 capture_output=True,
                 text=True,
                 cwd=os.path.abspath(self.sandbox_dir),
@@ -96,6 +101,8 @@ class ToolExecutor:
             return f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
         except subprocess.TimeoutExpired:
             return "Error: Command timed out."
+        except FileNotFoundError:
+            return f"Error: Command '{base_cmd}' not found."
         except Exception as e:
             return f"Error running command: {str(e)}"
 

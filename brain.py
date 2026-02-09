@@ -6,7 +6,7 @@ from tools import ToolExecutor
 
 class AIBrain:
     """
-    Core LLM logic for the AI system with quality improvements (Stage 5).
+    Core LLM logic for the AI system with planning capabilities (Stage 6).
     """
     def __init__(self, api_key, ltm, model_name="gemini-1.5-flash"):
         genai.configure(api_key=api_key)
@@ -16,7 +16,7 @@ class AIBrain:
                 "Kamu adalah AI Core yang cerdas, netral, dan membantu. "
                 "Tugasmu adalah berpikir logis dan memberikan jawaban yang akurat dalam Bahasa Indonesia. "
                 "Gunakan nada bicara yang sopan, profesional, dan dewasa. "
-                "Patuhi instruksi kualitas dan format respons yang diberikan dalam prompt."
+                "Patuhi instruksi perencanaan, kualitas, dan format respons yang diberikan dalam prompt."
             )
         )
         self.reasoning = ReasoningLayer()
@@ -39,13 +39,13 @@ class AIBrain:
 
     def generate_response(self, user_input, history, long_term_context=None):
         """
-        Generates a validated response using reasoning, tools, and quality checks.
+        Generates a validated response using planning, reasoning, tools, and quality checks.
         """
         try:
             # 1. Start chat session
             chat = self.model.start_chat(history=history)
 
-            # 2. Format and send structured prompt
+            # 2. Format and send structured prompt (now including planning)
             structured_prompt = self.reasoning.format_prompt(user_input, long_term_context)
             response = chat.send_message(structured_prompt)
             raw_text = response.text

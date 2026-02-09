@@ -15,10 +15,10 @@ def main():
         return
 
     # Initialize components
-    print("Initializing Long-Term Memory (Stage 2/5)...")
+    print("Initializing Long-Term Memory (Stage 2/6)...")
     ltm = LongTermMemory()
 
-    print("Initializing Brain Core (Stage 5)...")
+    print("Initializing Brain Core (Stage 6: Planning & Reasoning)...")
     brain = AIBrain(api_key=api_key, ltm=ltm)
 
     memory = ShortTermMemory(max_turns=10)

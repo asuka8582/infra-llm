@@ -1,12 +1,14 @@
 import re
 import json
+from planner import PlannerLayer
 
 class ReasoningLayer:
     """
-    Handles structured reasoning, tool selection, and response validation.
+    Handles structured reasoning, planning, tool selection, and response validation.
     """
 
     def __init__(self):
+        self.planner = PlannerLayer()
         self.tools_doc = """
 ### TOOLS TERSEDIA ###
 1. web_search(query): Mencari informasi terbaru di internet.
@@ -27,12 +29,14 @@ class ReasoningLayer:
 
         self.reasoning_instruction = """
 ### FORMAT RESPONS ###
-Gunakan format berikut secara berurutan:
-1. <reasoning>: Analisis niat pengguna, evaluasi memori, dan tentukan rencana.
-2. <tool_call> (Opsional): Panggil SATU tool jika diperlukan. Format: {"name": "...", "params": {...}}
-3. <initial_answer>: Draft jawaban pertama Anda.
-4. <validation>: Tinjau draft Anda (kejelasan, konsistensi, kebenaran).
-5. <final_answer>: Jawaban akhir yang telah divalidasi dan diperbaiki.
+Wajib gunakan format berikut secara berurutan:
+1. <intent_analysis>: Analisis mendalam tentang apa yang diinginkan pengguna.
+2. <plan>: Susun rencana langkah-demi-langkah untuk menyelesaikan permintaan.
+3. <step_execution>: Jalankan rencana secara internal. Jika butuh tool, tentukan di sini.
+4. <tool_call> (Opsional): Panggil SATU tool jika diperlukan. Format: {"name": "...", "params": {...}}
+5. <initial_answer>: Draft jawaban pertama Anda berdasarkan eksekusi rencana.
+6. <validation>: Tinjau draft Anda (kejelasan, konsistensi, kebenaran).
+7. <final_answer>: Jawaban akhir yang telah divalidasi dan diperbaiki.
 """
 
     def format_prompt(self, user_input, long_term_context=None):
@@ -42,6 +46,7 @@ Gunakan format berikut secara berurutan:
         prompt = "### ATURAN SISTEM ###\n"
         prompt += self.quality_instruction + "\n"
         prompt += self.tools_doc + "\n"
+        prompt += self.planner.get_instruction() + "\n"
         prompt += self.reasoning_instruction + "\n\n"
 
         prompt += "### KONTEKS ###\n"
@@ -63,7 +68,6 @@ Gunakan format berikut secara berurutan:
         if match:
             try:
                 content = match.group(1).strip()
-                # Simple cleanup for JSON
                 if content.startswith("```json"):
                     content = content[7:-3].strip()
                 return json.loads(content)
@@ -78,7 +82,7 @@ Gunakan format berikut secara berurutan:
         return (
             f"\n### HASIL TOOL: {tool_name} ###\n"
             f"```\n{result}\n```\n"
-            "Gunakan hasil ini untuk melengkapi penalaran dan memberikan <final_answer> yang divalidasi."
+            "Gunakan hasil ini untuk melengkapi eksekusi rencana dan memberikan <final_answer> yang divalidasi."
         )
 
     def extract_final_answer(self, raw_response):
@@ -91,7 +95,7 @@ Gunakan format berikut secara berurutan:
             return match.group(1).strip()
 
         # Fallback cascade
-        for tag in ['initial_answer', 'reasoning']:
+        for tag in ['initial_answer', 'step_execution', 'intent_analysis']:
             match = re.search(f'<{tag}>(.*?)</{tag}>', raw_response, re.DOTALL)
             if match:
                 return match.group(1).strip()
