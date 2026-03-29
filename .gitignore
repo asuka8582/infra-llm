@@ -1,9 +1,5 @@
-
----
-
-## `.gitignore`
-```gitignore
 .env
 __pycache__/
 venv/
 .venv/
+*.pyc
